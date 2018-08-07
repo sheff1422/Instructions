@@ -94,7 +94,11 @@ public class OverlayManager {
     /// Used to temporarily disable the tap, for a given coachmark.
     internal var enableTap: Bool = true
 
-    internal lazy var overlayView: OverlayView = OverlayView()
+    internal lazy var overlayView: OverlayView =  {() -> OverlayView in
+        let overlayView = OverlayView()
+        overlayView.delegate = self
+        return overlayView
+    }()
 
     // MARK: - Private Properties
     private lazy var overlayStyleManager: OverlayStyleManager = {
@@ -169,4 +173,12 @@ public class OverlayManager {
 internal protocol OverlayManagerDelegate: Snapshottable {
     /// Called when the overlay received a tap event.
     func didReceivedSingleTap()
+    func didReceivedTapInCutoutPath()
+}
+
+extension OverlayManager: OverlayViewDelegate {
+    func tappedInCutoutPath() {
+        self.delegate?.didReceivedTapInCutoutPath()
+    }
+
 }

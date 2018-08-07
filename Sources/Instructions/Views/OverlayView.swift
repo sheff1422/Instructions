@@ -24,7 +24,15 @@ import UIKit
 
 // Overlay a blocking view on top of the screen and handle the cutout path
 // around the point of interest.
+protocol OverlayViewDelegate {
+    func tappedInCutoutPath()
+}
+
 class OverlayView: UIView {
+    
+    var delegate: OverlayViewDelegate?
+    
+
     internal static let sublayerName = "Instructions.OverlaySublayer"
 
     var cutoutPath: UIBezierPath?
@@ -48,6 +56,7 @@ class OverlayView: UIView {
 
         if hitView == self {
             guard let cutoutPath = self.cutoutPath else {
+                self.delegate?.tappedInCutoutPath()
                 return hitView
             }
 
