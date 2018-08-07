@@ -56,7 +56,6 @@ class OverlayView: UIView {
 
         if hitView == self {
             guard let cutoutPath = self.cutoutPath else {
-                self.delegate?.tappedInCutoutPath()
                 return hitView
             }
 
@@ -65,6 +64,7 @@ class OverlayView: UIView {
             }
 
             if cutoutPath.contains(point) {
+                self.delegate?.tappedInCutoutPath()
                 return nil
             } else {
                 return hitView
