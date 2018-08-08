@@ -26,17 +26,25 @@ extension CoachMarksController: CoachMarksControllerProxyDataSource {
     func numberOfCoachMarks() -> Int {
         return dataSource!.numberOfCoachMarks(for: self)
     }
-
+    
     func coachMark(at index: Int) -> CoachMark {
+        if (dataSource?.coachMarksController(self, coachMarkAt: index) == nil) {
+            return CoachMark()
+        }
         return dataSource!.coachMarksController(self, coachMarkAt: index)
     }
-
+    
     func coachMarkViews(at index: Int, madeFrom coachMark: CoachMark)
         -> (bodyView: CoachMarkBodyView, arrowView: CoachMarkArrowView?) {
+            if (dataSource?.coachMarksController(self, coachMarkViewsAt: index,
+                                                 madeFrom: coachMark) == nil) {
+                let blankBodyView = CoachMarkBodyDefaultView(hintText: "", nextText: "")
+                return (blankBodyView, nil)
+            }
             return dataSource!.coachMarksController(self, coachMarkViewsAt: index,
                                                     madeFrom: coachMark)
     }
-
+    
     func constraintsForSkipView(_ skipView: UIView,
                                 inParent parentView: UIView)
         -> [NSLayoutConstraint]? {
@@ -45,7 +53,6 @@ extension CoachMarksController: CoachMarksControllerProxyDataSource {
                                                     inParent: parentView)
     }
 }
-
 extension CoachMarksController: CoachMarksControllerProxyDelegate {
     func willLoadCoachMark(at index: Int) -> Bool {
         guard let delegate = delegate else { return true }
