@@ -64,6 +64,9 @@ public struct CoachMark {
 
     /// Set this property to `true` to allow touch forwarding inside the cutoutPath.
     public var allowTouchInsideCutoutPath: Bool = false
+    
+    /// Set this property to `true` to allow touch forwarding inside the cutoutPath.
+    public var shouldMoveFlowBasedOnCutoutPathTouch: Bool = false
 
     // MARK: - Initialization
     /// Allocate and initialize a Coach mark with default values.

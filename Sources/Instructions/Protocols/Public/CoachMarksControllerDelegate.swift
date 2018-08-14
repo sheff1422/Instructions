@@ -50,7 +50,11 @@ public protocol CoachMarksControllerDelegate: class {
 
     func shouldHandleOverlayTap(in coachMarksController: CoachMarksController,
                                 at index: Int) -> Bool
+    func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController,
+                                     at index: Int) -> Bool
+
 }
+
 
 public extension CoachMarksControllerDelegate {
     func coachMarksController(_ coachMarksController: CoachMarksController,
@@ -81,6 +85,9 @@ public extension CoachMarksControllerDelegate {
 
     func shouldHandleOverlayTap(in coachMarksController: CoachMarksController,
                                 at index: Int) -> Bool {
+        return true
+    }
+    func shouldReactToCutoutPathTaps() -> Bool {
         return true
     }
 }

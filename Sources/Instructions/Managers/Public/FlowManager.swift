@@ -28,6 +28,10 @@ public class FlowManager {
     public var started: Bool {
         return currentIndex > -1
     }
+    
+    public var index: Int {
+        return currentIndex
+    }
 
     /// Sometimes, the chain of coach mark display can be paused
     /// to let animations be performed. `true` to pause the execution,

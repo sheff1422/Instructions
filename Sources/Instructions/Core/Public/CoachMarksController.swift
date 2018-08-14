@@ -176,6 +176,9 @@ extension CoachMarksController: OverlayManagerDelegate {
         }
     }
     func didReceivedTapInCutoutPath() {
+        if delegate?.shouldReactToCutoutPathTaps(in: self, at: flow.currentIndex) == false {
+            return
+        }
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.flow.showNextCoachMark()
         }
