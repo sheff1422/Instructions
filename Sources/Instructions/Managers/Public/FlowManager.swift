@@ -99,10 +99,10 @@ public class FlowManager {
                 self.createAndShowCoachMark(afterResuming: true)
             }
 
-            if coachMarksViewController.overlayManager.isWindowHidden {
-                coachMarksViewController.overlayManager.showWindow(true, completion: completion)
-            } else if coachMarksViewController.overlayManager.isOverlayInvisible {
-                coachMarksViewController.overlayManager.showOverlay(true, completion: completion)
+            if coachMarksViewController?.overlayManager.isWindowHidden == true {
+                coachMarksViewController?.overlayManager.showWindow(true, completion: completion)
+            } else if coachMarksViewController?.overlayManager.isOverlayInvisible == true {
+                coachMarksViewController?.overlayManager.showOverlay(true, completion: completion)
             } else {
                 completion(true)
             }
@@ -114,9 +114,9 @@ public class FlowManager {
 
         switch pauseStyle {
         case .hideInstructions:
-            coachMarksViewController.overlayManager.showWindow(false, completion: nil)
+            coachMarksViewController?.overlayManager.showWindow(false, completion: nil)
         case .hideOverlay:
-            coachMarksViewController.overlayManager.showOverlay(false, completion: nil)
+            coachMarksViewController?.overlayManager.showOverlay(false, completion: nil)
         case .hideNothing: break
         }
     }
@@ -146,7 +146,7 @@ public class FlowManager {
 
         let completionBlock = { [weak self] (finished: Bool) -> Void in
             guard let strongSelf = self else { return }
-            strongSelf.coachMarksViewController.detachFromWindow()
+            strongSelf.coachMarksViewController?.detachFromWindow()
             if shouldCallDelegate { strongSelf.delegate?.didEndShowingBySkipping(skipped) }
         }
 

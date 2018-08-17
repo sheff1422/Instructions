@@ -344,10 +344,4 @@ private extension CoachMarksViewController {
     @objc func skipCoachMarksTour(_ sender: AnyObject?) {
         delegate?.didTap(skipView: skipView)
     }
-
-    func retrieveConfig(from parentViewController: UIViewController) {
-        _shouldAutorotate = parentViewController.shouldAutorotate
-        _prefersStatusBarHidden = parentViewController.prefersStatusBarHidden
-        _supportedInterfaceOrientations = parentViewController.supportedInterfaceOrientations
-    }
 }

@@ -253,7 +253,7 @@ internal protocol OverlayManagerDelegate: Snapshottable {
 
 extension OverlayManager: OverlayViewDelegate {
     func tappedInCutoutPath() {
-        self.delegate?.didReceivedTapInCutoutPath()
+        self.overlayDelegate?.didReceivedTapInCutoutPath()
     }
 
 }
