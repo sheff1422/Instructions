@@ -89,7 +89,7 @@ public class OverlayManager {
 
     // MARK: - Internal Properties
     /// Delegate to which tell that the overlay view received a tap event.
-    internal weak var delegate: OverlayManagerDelegate?
+    internal weak var overlayDelegate: OverlayManagerDelegate?
 
     /// Used to temporarily disable the tap, for a given coachmark.
     internal var enableTap: Bool = true
@@ -99,6 +99,34 @@ public class OverlayManager {
         overlayView.delegate = self
         return overlayView
     }()
+
+    internal var statusBarStyle: UIStatusBarStyle {
+        if let blurEffectStyle = blurEffectStyle {
+            if blurEffectStyle == .dark {
+                return .lightContent
+            } else {
+                return .default
+            }
+        } else {
+            var alpha: CGFloat = 1.0
+            var white: CGFloat = 1.0
+            color.getWhite(&white, alpha: &alpha)
+
+            return white >= 0.5 ? .default : .lightContent
+        }
+    }
+
+    internal var isWindowHidden: Bool {
+#if INSTRUCTIONS_APP_EXTENSIONS
+        return overlayView.superview?.isHidden ?? true
+#else
+        return overlayView.window?.isHidden ?? true
+#endif
+    }
+
+    internal var isOverlayInvisible: Bool {
+        return overlayView.alpha == 0
+    }
 
     // MARK: - Private Properties
     private lazy var overlayStyleManager: OverlayStyleManager = {
@@ -119,7 +147,7 @@ public class OverlayManager {
     /// - Parameter sender: the object which sent the event
     @objc fileprivate func handleSingleTap(_ sender: AnyObject?) {
         if enableTap {
-            self.delegate?.didReceivedSingleTap()
+            self.overlayDelegate?.didReceivedSingleTap()
         }
     }
 
@@ -133,7 +161,53 @@ public class OverlayManager {
 
     func showOverlay(_ show: Bool, completion: ((Bool) -> Void)?) {
         overlayStyleManager.showOverlay(show, withDuration: fadeAnimationDuration,
-                                    completion: completion)
+                                        completion: completion)
+    }
+
+    func showWindow(_ show: Bool, completion: ((Bool) -> Void)?) {
+#if INSTRUCTIONS_APP_EXTENSIONS
+        guard let topView = overlayView.superview else {
+            completion?(false)
+            return
+        }
+
+        if show {
+            overlayView.alpha = 1.0
+            topView.isHidden = false
+            UIView.animate(withDuration: fadeAnimationDuration, animations: {
+                topView.alpha = 1.0
+            }, completion: completion)
+        } else {
+            topView.isHidden = false
+            UIView.animate(withDuration: fadeAnimationDuration, animations: {
+                topView.alpha = 0.0
+            }, completion: { (success) in
+                topView.isHidden = true
+                completion?(success)
+            })
+        }
+#else
+        guard let window = overlayView.window else {
+            completion?(false)
+            return
+        }
+
+        if show {
+            overlayView.alpha = 1.0
+            window.isHidden = false
+            UIView.animate(withDuration: fadeAnimationDuration, animations: {
+                window.alpha = 1.0
+            }, completion: completion)
+        } else {
+            overlayView.window?.isHidden = false
+            UIView.animate(withDuration: fadeAnimationDuration, animations: {
+                window.alpha = 0.0
+            }, completion: { (success) in
+                window.isHidden = true
+                completion?(success)
+            })
+        }
+#endif
     }
 
     func viewWillTransition() {
@@ -148,7 +222,7 @@ public class OverlayManager {
 
     private func updateDependencies(of overlayAnimator: BlurringOverlayStyleManager) {
         overlayAnimator.overlayView = self.overlayView
-        overlayAnimator.snapshotDelegate = self.delegate
+        overlayAnimator.snapshotDelegate = self.overlayDelegate
     }
 
     private func updateDependencies(of overlayAnimator: TranslucentOverlayStyleManager) {
@@ -156,7 +230,7 @@ public class OverlayManager {
     }
 
     private func updateOverlayStyleManager() -> OverlayStyleManager {
-        if let style = blurEffectStyle {
+        if let style = blurEffectStyle, !UIAccessibilityIsReduceTransparencyEnabled() {
             let blurringOverlayStyleManager = BlurringOverlayStyleManager(style: style)
             self.updateDependencies(of: blurringOverlayStyleManager)
             return blurringOverlayStyleManager
@@ -168,6 +242,7 @@ public class OverlayManager {
     }
 }
 
+// swiftlint:disable class_delegate_protocol
 /// This protocol expected to be implemented by CoachMarkManager, so
 /// it can be notified when a tap occured on the overlay.
 internal protocol OverlayManagerDelegate: Snapshottable {
