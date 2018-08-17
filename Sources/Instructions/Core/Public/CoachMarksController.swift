@@ -198,9 +198,9 @@ extension CoachMarksController: OverlayManagerDelegate {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.1) {
             self.flow.showNextCoachMark()
         }
-        if delegate?.shouldHandleOverlayTap(in: self, at: flow.currentIndex) ?? true {
-            flow.showNextCoachMark()
-        }
+//        if delegate?.shouldHandleOverlayTap(in: self, at: flow.currentIndex) ?? true {
+//            flow.showNextCoachMark()
+//        }
     }
 }
 
