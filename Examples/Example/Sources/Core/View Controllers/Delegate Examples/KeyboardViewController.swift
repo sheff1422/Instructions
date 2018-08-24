@@ -138,6 +138,10 @@ extension KeyboardViewController: CoachMarksControllerDataSource {
 
 // MARK: - Protocol Conformance | CoachMarksControllerDelegate
 extension KeyboardViewController: CoachMarksControllerDelegate {
+    func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController, at index: Int) -> Bool {
+        return false
+    }
+    
     func coachMarksController(_ coachMarksController: CoachMarksController,
                               willShow coachMark: inout CoachMark,
                               afterSizeTransition: Bool,

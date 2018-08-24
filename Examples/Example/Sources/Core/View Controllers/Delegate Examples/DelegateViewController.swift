@@ -102,6 +102,10 @@ extension DelegateViewController: CoachMarksControllerDataSource {
 
 // MARK: - Protocol Conformance | CoachMarksControllerDelegate
 extension DelegateViewController: CoachMarksControllerDelegate {
+    func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController, at index: Int) -> Bool {
+        return false
+    }
+    
     func coachMarksController(_ coachMarksController: CoachMarksController,
                               configureOrnamentsOfOverlay overlay: UIView) {
         let label = UILabel()

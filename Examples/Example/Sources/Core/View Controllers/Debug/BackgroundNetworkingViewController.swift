@@ -76,6 +76,10 @@ internal class BackgroundNetworkingViewController: DefaultViewController {
 
 // MARK: - CoachMarksControllerDelegate
 extension BackgroundNetworkingViewController: CoachMarksControllerDelegate {
+    func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController, at index: Int) -> Bool {
+        return false
+    }
+    
     func coachMarksController(_ coachMarksController: CoachMarksController,
                               willShow coachMark: inout CoachMark, afterSizeTransition: Bool,
                               at index: Int) {

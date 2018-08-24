@@ -144,6 +144,10 @@ extension TransitionFromCodeViewController: CoachMarksControllerDataSource {
 
 // MARK: - Protocol Conformance | CoachMarksControllerDelegate
 extension TransitionFromCodeViewController: CoachMarksControllerDelegate {
+    func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController, at index: Int) -> Bool {
+        return false
+    }
+    
     func coachMarksController(_ coachMarksController: CoachMarksController, willLoadCoachMarkAt index: Int) -> Bool {
         switch(index) {
         case 1:

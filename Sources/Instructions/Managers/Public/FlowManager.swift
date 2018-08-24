@@ -266,6 +266,10 @@ public class FlowManager {
 
 extension FlowManager: CoachMarksViewControllerDelegate {
     func didTap(coachMarkView: CoachMarkView?) {
+        delegate?.didReceiveTap(at: index)
+        if delegate?.shouldGoNextFrom(from: index) == false {
+            return
+        }
         showNextCoachMark()
     }
 

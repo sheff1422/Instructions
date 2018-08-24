@@ -118,6 +118,10 @@ extension TestFlowViewController: CoachMarksControllerDataSource {
 
 // MARK: - Protocol Conformance | CoachMarksControllerDelegate
 extension TestFlowViewController: CoachMarksControllerDelegate {
+    func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController, at index: Int) -> Bool {
+        return false
+    }
+    
     func coachMarksController(_ coachMarksController: CoachMarksController,
                               willLoadCoachMarkAt index: Int) -> Bool {
         print("willLoadCoachMarkAt: \(index)")

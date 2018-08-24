@@ -53,9 +53,15 @@ public protocol CoachMarksControllerDelegate: class {
 
     func shouldHandleOverlayTap(in coachMarksController: CoachMarksController,
                                 at index: Int) -> Bool
+    
     func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController,
                                      at index: Int) -> Bool
-
+    
+    func coachMarksController(_ coachMarksController: CoachMarksController,
+                              shouldGoNextFrom index :Int) ->  Bool
+    
+    func coachMarksController(_ coachMarksController: CoachMarksController,
+                              didReceiveTapAt index :Int)
 }
 
 
@@ -93,9 +99,20 @@ public extension CoachMarksControllerDelegate {
                                 at index: Int) -> Bool {
         return true
     }
+    
     func shouldReactToCutoutPathTaps() -> Bool {
         return true
     }
+    
+    func coachMarksController(_ coachMarksController: CoachMarksController,
+                              shouldGoNextFrom index :Int) ->  Bool {
+        return true
+    }
+    
+    func coachMarksController(_ coachMarksController: CoachMarksController,
+                              didReceiveTapAt index :Int) {
+    }
+
 }
 
 protocol CoachMarksControllerProxyDelegate: class {
@@ -114,4 +131,9 @@ protocol CoachMarksControllerProxyDelegate: class {
     func didEndShowingBySkipping(_ skipped: Bool)
 
     func shouldHandleOverlayTap(at index: Int) -> Bool
+    
+    
+    func shouldGoNextFrom(from index :Int) ->  Bool
+    
+    func didReceiveTap(at index :Int)
 }

@@ -52,6 +52,16 @@ extension CoachMarksController: CoachMarksControllerProxyDataSource {
                                                     constraintsForSkipView: skipView,
                                                     inParent: parentView)
     }
+    func shouldGoNextFrom(from index: Int) -> Bool {
+        guard let delegate = delegate else { return true }
+        
+        return delegate.coachMarksController(self, shouldGoNextFrom: index)
+    }
+    
+    func didReceiveTap(at index: Int) {
+        delegate?.coachMarksController(self, didReceiveTapAt: index)
+    }
+
 }
 extension CoachMarksController: CoachMarksControllerProxyDelegate {
     func configureOrnaments(ofOverlay overlay: UIView) {
