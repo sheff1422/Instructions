@@ -173,7 +173,7 @@ public extension CoachMarksController {
     /// If the display wasn't paused earlier, this method won't do anything.
     @available(*, deprecated: 0.6.0, message: "Please use flow.resume() instead.")
     func resume() {
-        flow.resume()
+        flow.resume(true)
     }
 }
 

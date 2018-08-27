@@ -91,12 +91,14 @@ public class FlowManager {
         }
     }
 
-    public func resume() {
+    public func resume(_ shouldRecreateCoachmark:Bool) {
         if started && paused {
             paused = false
 
             let completion: (Bool) -> Void = { _ in
-                self.createAndShowCoachMark(afterResuming: true)
+                if shouldRecreateCoachmark {
+                    self.createAndShowCoachMark(afterResuming: true)
+                }
             }
 
             if coachMarksViewController?.overlayManager.isWindowHidden == true {

@@ -138,7 +138,7 @@ class KeyboardViewController: UIInputViewController,
     }
 
     @IBAction func resumeFlow() {
-        coachMarksController?.flow.resume()
+        coachMarksController?.flow.resume(true)
     }
 }
 
