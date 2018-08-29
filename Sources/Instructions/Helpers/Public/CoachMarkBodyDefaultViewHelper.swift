@@ -98,7 +98,7 @@ open class CoachMarkBodyDefaultViewHelper {
     private func configureTextPropertiesOfHint(_ hint: UITextView) {
         hint.textColor = UIColor.darkGray
         hint.font = UIFont.systemFont(ofSize: 15.0)
-        hint.textAlignment = .justified
+        hint.textAlignment = .left
         hint.layoutManager.hyphenationFactor = 1.0
         hint.isEditable = false
     }
