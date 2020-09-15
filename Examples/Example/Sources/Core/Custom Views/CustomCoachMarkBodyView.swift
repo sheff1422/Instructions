@@ -1,36 +1,13 @@
-// CustomCoachMarkBodyView.swift
-//
-// Copyright (c) 2015, 2016 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2015-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 import Instructions
 
 // Custom coach mark body (with the secret-like arrow)
-internal class CustomCoachMarkBodyView : UIView, CoachMarkBodyView {
+internal class CustomCoachMarkBodyView: UIView, CoachMarkBodyView {
     // MARK: - Internal properties
-    var nextControl: UIControl? {
-        get {
-            return self.nextButton
-        }
-    }
+    var nextControl: UIControl? { return self.nextButton }
 
     var highlighted: Bool = false
 
@@ -43,7 +20,7 @@ internal class CustomCoachMarkBodyView : UIView, CoachMarkBodyView {
 
     var hintLabel = UITextView()
 
-    weak var highlightArrowDelegate: CoachMarkBodyHighlightArrowDelegate? = nil
+    weak var highlightArrowDelegate: CoachMarkBodyHighlightArrowDelegate?
 
     // MARK: - Initialization
     override init (frame: CGRect) {
@@ -61,7 +38,7 @@ internal class CustomCoachMarkBodyView : UIView, CoachMarkBodyView {
     }
 
     // MARK: - Private methods
-    fileprivate func setupInnerViewHierarchy() {
+    private func setupInnerViewHierarchy() {
         self.translatesAutoresizingMaskIntoConstraints = false
         self.backgroundColor = UIColor.white
 
@@ -82,24 +59,32 @@ internal class CustomCoachMarkBodyView : UIView, CoachMarkBodyView {
         self.nextButton.isUserInteractionEnabled = true
         self.hintLabel.isUserInteractionEnabled = false
 
-        self.nextButton.setBackgroundImage(UIImage(named: "button-background"), for: UIControlState())
-        self.nextButton.setBackgroundImage(UIImage(named: "button-background-highlighted"), for: .highlighted)
+        self.nextButton.setBackgroundImage(UIImage(named: "button-background"),
+                                           for: .normal)
+        self.nextButton.setBackgroundImage(UIImage(named: "button-background-highlighted"),
+                                           for: .highlighted)
 
-        self.nextButton.setTitleColor(UIColor.white, for: UIControlState())
+        self.nextButton.setTitleColor(UIColor.white, for: .normal)
         self.nextButton.titleLabel?.font = UIFont.systemFont(ofSize: 15.0)
 
         self.addSubview(nextButton)
         self.addSubview(hintLabel)
 
-        self.addConstraint(NSLayoutConstraint(item: nextButton, attribute: .centerY, relatedBy: .equal, toItem: self, attribute: .centerY, multiplier: 1, constant: 0))
+        NSLayoutConstraint.activate([
+            nextButton.centerYAnchor.constraint(equalTo: centerYAnchor),
+            nextButton.heightAnchor.constraint(equalToConstant: 30),
 
-        self.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:[nextButton(==30)]", options: NSLayoutFormatOptions(rawValue: 0),
-            metrics: nil, views: ["nextButton": nextButton]))
+            hintLabel.topAnchor.constraint(equalTo: topAnchor, constant: 5),
+            hintLabel.bottomAnchor.constraint(equalTo: bottomAnchor, constant: -5)
+        ])
 
-        self.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "V:|-(5)-[hintLabel]-(5)-|", options: NSLayoutFormatOptions(rawValue: 0),
-            metrics: nil, views: ["hintLabel": hintLabel]))
-
-        self.addConstraints(NSLayoutConstraint.constraints(withVisualFormat: "H:|-(10)-[hintLabel]-(10)-[nextButton(==40)]-(10)-|", options: NSLayoutFormatOptions(rawValue: 0),
-            metrics: nil, views: ["hintLabel": hintLabel, "nextButton": nextButton]))
+        NSLayoutConstraint.activate(
+            NSLayoutConstraint.constraints(
+                withVisualFormat: "H:|-(10)-[hintLabel]-(10)-[nextButton(==40)]-(10)-|",
+                options: NSLayoutConstraint.FormatOptions(rawValue: 0),
+                metrics: nil,
+                views: ["hintLabel": hintLabel, "nextButton": nextButton]
+            )
+        )
     }
 }

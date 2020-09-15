@@ -1,24 +1,5 @@
-// BackgroundNetworkingViewController.swift
-//
-// Copyright (c) 2016 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2016-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 import Instructions
@@ -28,7 +9,7 @@ import Instructions
 internal class BackgroundNetworkingViewController: DefaultViewController {
 
     // MARK: - Private properties
-    fileprivate lazy var urlSession: Foundation.URLSession = {
+    private lazy var urlSession: Foundation.URLSession = {
         let configuration = URLSessionConfiguration.background(withIdentifier: "BackgroundNetworking")
         configuration.sessionSendsLaunchEvents = true
         configuration.isDiscretionary = true
@@ -36,7 +17,7 @@ internal class BackgroundNetworkingViewController: DefaultViewController {
         return Foundation.URLSession(configuration: configuration, delegate: self, delegateQueue: nil)
     }()
 
-    fileprivate var downloadTask: URLSessionDownloadTask?
+    private var downloadTask: URLSessionDownloadTask?
 
     var stopInstructions: Bool = false
 
@@ -72,23 +53,21 @@ internal class BackgroundNetworkingViewController: DefaultViewController {
             downloadTask?.resume()
         }
     }
-}
 
-// MARK: - CoachMarksControllerDelegate
-extension BackgroundNetworkingViewController: CoachMarksControllerDelegate {
+    // MARK: CoachMarksControllerDelegate
     func shouldReactToCutoutPathTaps(in coachMarksController: CoachMarksController, at index: Int) -> Bool {
         return false
     }
-    
-    func coachMarksController(_ coachMarksController: CoachMarksController,
-                              willShow coachMark: inout CoachMark, afterSizeTransition: Bool,
-                              at index: Int) {
-        if index == 2 && !afterSizeTransition {
+
+    override func coachMarksController(_ coachMarksController: CoachMarksController,
+                                       willShow coachMark: inout CoachMark,
+                                       beforeChanging change: ConfigurationChange,
+                                       at index: Int) {
+        if index == 2 && change == .nothing {
             coachMarksController.flow.pause()
             startDownload()
         }
     }
-
 }
 
 // MARK: - NSURLSessionDownloadDelegate
@@ -100,20 +79,25 @@ extension BackgroundNetworkingViewController: URLSessionDownloadDelegate {
             UIApplication.shared.isNetworkActivityIndicatorVisible = false
             if self.stopInstructions { return }
 
-            if !self.coachMarksController.flow.started {
-                self.coachMarksController.start(on: self)
+            if !self.coachMarksController.flow.isStarted {
+                self.coachMarksController.start(in: .window(over: self))
             } else {
                 self.coachMarksController.flow.resume()
             }
         }
     }
 
-    func urlSession(_ session: URLSession, downloadTask: URLSessionDownloadTask, didWriteData bytesWritten: Int64, totalBytesWritten: Int64, totalBytesExpectedToWrite: Int64) {
+    func urlSession(_ session: URLSession,
+                    downloadTask: URLSessionDownloadTask,
+                    didWriteData bytesWritten: Int64,
+                    totalBytesWritten: Int64,
+                    totalBytesExpectedToWrite: Int64) {
 
         let progress = Float(totalBytesWritten) / Float(totalBytesExpectedToWrite)
-        let size = ByteCountFormatter.string(fromByteCount: totalBytesExpectedToWrite, countStyle: ByteCountFormatter.CountStyle.binary)
+        let size = ByteCountFormatter.string(fromByteCount: totalBytesExpectedToWrite,
+                                             countStyle: ByteCountFormatter.CountStyle.binary)
 
-        print(String(format: "%.1f%% of %@",  progress * 100, size))
+        print(String(format: "%.1f%% of %@", progress * 100, size))
     }
 
     func urlSessionDidFinishEvents(forBackgroundURLSession session: URLSession) {

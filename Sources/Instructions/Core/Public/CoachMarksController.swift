@@ -1,27 +1,5 @@
-// CoachMarksController.swift
-//
-// Copyright (c) 2015, 2016 Frédéric Maquin <fred@ephread.com>,
-//                          Daniel Basedow <daniel.basedow@gmail.com>,
-//                          Esteban Soto <esteban.soto.dev@gmail.com>,
-//                          Ogan Topkaya <>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2015-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 
@@ -37,6 +15,10 @@ public class CoachMarksController {
     /// be called at various points.
     public weak var delegate: CoachMarksControllerDelegate?
 
+    /// Implement the animation delegate protocol, which methods will
+    /// be called at various points.
+    public weak var animationDelegate: CoachMarksControllerAnimationDelegate?
+
     /// Controls the style of the status bar when coach marks are displayed
     public var statusBarStyle: UIStatusBarStyle? {
         get {
@@ -49,8 +31,23 @@ public class CoachMarksController {
         }
     }
 
+    public var rotationStyle: RotationStyle {
+        get { return coachMarksViewController.rotationStyle }
+        set { coachMarksViewController.rotationStyle = newValue }
+    }
+
+    public var statusBarVisibility: StatusBarVisibility {
+        get { return coachMarksViewController.statusBarVisibility }
+        set { coachMarksViewController.statusBarVisibility = newValue }
+    }
+
+    public var interfaceOrientations: InterfaceOrientations {
+        get { return coachMarksViewController.interfaceOrientations }
+        set { coachMarksViewController.interfaceOrientations = newValue }
+    }
+
     /// Hide the UI.
-    fileprivate(set) public lazy var overlay: OverlayManager = {
+    private(set) public lazy var overlay: OverlayManager = {
         let overlay = OverlayManager()
         overlay.overlayDelegate = self
 
@@ -58,14 +55,14 @@ public class CoachMarksController {
     }()
 
     /// Provide cutout path related helpers.
-    fileprivate(set) public lazy var helper: CoachMarkHelper! = {
+    private(set) public lazy var helper: CoachMarkHelper! = {
         let instructionsTopView = self.coachMarksViewController.instructionsRootView
         return CoachMarkHelper(instructionsRootView: instructionsTopView,
                                flowManager: self.flow)
     }()
 
     /// Handles the flow of coachmarks.
-    fileprivate(set) public lazy var flow: FlowManager = {
+    private(set) public lazy var flow: FlowManager = {
         let flowManager = FlowManager(coachMarksViewController: self.coachMarksViewController)
         flowManager.dataSource = self
         flowManager.delegate = self
@@ -76,15 +73,15 @@ public class CoachMarksController {
     }()
 
     // MARK: - Private properties
-    fileprivate weak var controllerWindow: UIWindow?
-
-    fileprivate var coachMarksWindow: UIWindow?
+    private weak var controllerWindow: UIWindow?
+    private var coachMarksWindow: UIWindow?
 
     /// Handle the UI part
-    fileprivate lazy var coachMarksViewController: CoachMarksViewController = {
-        let coachMarkController = CoachMarksViewController()
-        coachMarkController.coachMarkDisplayManager = self.buildCoachMarkDisplayManager()
-        coachMarkController.skipViewDisplayManager = self.buildSkipViewDisplayManager()
+    private lazy var coachMarksViewController: CoachMarksViewController = {
+        let coachMarkController = CoachMarksViewController(
+            coachMarkDisplayManager: self.buildCoachMarkDisplayManager(),
+            skipViewDisplayManager: self.buildSkipViewDisplayManager()
+        )
 
         coachMarkController.overlayManager = self.overlay
 
@@ -98,7 +95,7 @@ public class CoachMarksController {
 // MARK: - Forwarded Properties
 public extension CoachMarksController {
     /// Control or control wrapper used to skip the flow.
-    var skipView: CoachMarkSkipView? {
+    var skipView: (UIView & CoachMarkSkipView)? {
         get { return coachMarksViewController.skipView }
         set { coachMarksViewController.skipView = newValue }
     }
@@ -106,34 +103,42 @@ public extension CoachMarksController {
 
 // MARK: - Flow management
 public extension CoachMarksController {
-    /// Start displaying the coach marks.
+    /// Start instructions in the given context.
     ///
-    /// - Parameter parentViewController: View Controller to which attach self.
-    public func start(on parentViewController: UIViewController) {
+    /// - Parameter presentationContext: the context in which show Instructions
+
+    func start(in presentationContext: PresentationContext) {
         guard let dataSource = self.dataSource else {
-            print("startOn: snap! you didn't setup any datasource, the" +
-                  "coach mark manager won't do anything.")
+            print(ErrorMessage.Warning.nilDataSource)
             return
         }
 
-        // If coach marks are currently being displayed, calling `start()` doesn't do anything.
-        if flow.started { return }
+        // If coach marks are currently being displayed, calling `start(in: )` doesn't do anything.
+        if flow.isStarted { return }
 
         let numberOfCoachMarks = dataSource.numberOfCoachMarks(for: self)
-        if numberOfCoachMarks <= 0 {
-            print("startOn: the dataSource returned an invalid value for " +
-                  "numberOfCoachMarksForCoachMarksController(_:)")
+        if numberOfCoachMarks < 0 {
+            fatalError(ErrorMessage.Fatal.negativeNumberOfCoachMarks)
+        } else if numberOfCoachMarks == 0 {
+            print(ErrorMessage.Warning.noCoachMarks)
             return
         }
 
+        switch presentationContext {
+        case .newWindow(let viewController, let windowLevel):
 #if INSTRUCTIONS_APP_EXTENSIONS
-        coachMarksViewController.attach(to: parentViewController)
+            fatalError(ErrorMessage.Fatal.windowContextNotAvailableInAppExtensions)
 #else
-        controllerWindow = parentViewController.view.window
-        coachMarksWindow = coachMarksWindow ?? InstructionsWindow(frame: UIScreen.main.bounds)
-
-        coachMarksViewController.attach(to: coachMarksWindow!, of: parentViewController)
+            controllerWindow = viewController.view.window
+            coachMarksWindow = coachMarksWindow ?? buildNewWindow()
+            coachMarksViewController.attach(to: coachMarksWindow!, over: viewController,
+                                            at: windowLevel)
 #endif
+        case .currentWindow(let viewController):
+            coachMarksViewController.attachToWindow(of: viewController)
+        case .viewController(let viewController):
+            coachMarksViewController.attach(to: viewController)
+        }
 
         delegate?.coachMarksController(self,
                                        configureOrnamentsOfOverlay: overlay.overlayView.ornaments)
@@ -145,19 +150,24 @@ public extension CoachMarksController {
     /// viewWillDisappear.
     ///
     /// - Parameter immediately: `true` to stop immediately, without animations.
-    public func stop(immediately: Bool = false) {
+    func stop(immediately: Bool = false) {
         if immediately {
-            flow.stopFlow(immediately: true, userDidSkip: false, shouldCallDelegate: false)
+            flow.stopFlow(immediately: true, userDidSkip: false,
+                          shouldCallDelegate: false) { [weak self] in
+                self?.coachMarksWindow = nil
+            }
         } else {
-            flow.stopFlow()
+            flow.stopFlow { [weak self] in
+                self?.coachMarksWindow = nil
+            }
         }
     }
 
-    public func prepareForChange() {
+    func prepareForChange() {
         coachMarksViewController.prepareForChange()
     }
 
-    public func restoreAfterChangeDidComplete() {
+    func restoreAfterChangeDidComplete() {
         coachMarksViewController.restoreAfterChangeDidComplete()
     }
 
@@ -180,8 +190,11 @@ public extension CoachMarksController {
 // MARK: - Protocol Conformance | OverlayViewDelegate
 extension CoachMarksController: Snapshottable {
     func snapshot() -> UIView? {
-        guard let window = controllerWindow else { return nil }
-        return window.snapshotView(afterScreenUpdates: true)
+        if let window = controllerWindow {
+            return window.snapshotView(afterScreenUpdates: true)
+        } else {
+            return coachMarksViewController.view.snapshotView(afterScreenUpdates: true)
+        }
     }
 }
 
@@ -210,6 +223,7 @@ private extension CoachMarksController {
         let coachMarkDisplayManager =
             CoachMarkDisplayManager(coachMarkLayoutHelper: CoachMarkLayoutHelper())
         coachMarkDisplayManager.dataSource = self
+        coachMarkDisplayManager.animationDelegate = self
 
         return coachMarkDisplayManager
     }
@@ -219,5 +233,22 @@ private extension CoachMarksController {
         skipViewDisplayManager.dataSource = self
 
         return skipViewDisplayManager
+    }
+
+    func buildNewWindow() -> UIWindow {
+#if !INSTRUCTIONS_APP_EXTENSIONS
+        if #available(iOS 13.0, *) {
+            if let windowScene = UIApplication.shared.activeScene {
+                let window = InstructionsWindow(windowScene: windowScene)
+                window.frame = UIApplication.shared.keyWindow?.bounds ?? UIScreen.main.bounds
+
+                return window
+            }
+        } else {
+            let bounds = UIApplication.shared.keyWindow?.bounds ?? UIScreen.main.bounds
+            return InstructionsWindow(frame: bounds)
+        }
+#endif
+        return InstructionsWindow(frame: UIScreen.main.bounds)
     }
 }

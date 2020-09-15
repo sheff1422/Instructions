@@ -1,24 +1,5 @@
-// KeyboardViewController.swift
-//
-// Copyright (c) 2017 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2017-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 import Instructions
@@ -40,25 +21,25 @@ internal class KeyboardViewController: UIViewController {
         super.viewDidLoad()
         // Do any additional setup after loading the view, typically from a nib.
 
-        coachMarksController.overlay.allowTap = false
+        coachMarksController.overlay.isUserInteractionEnabled = false
         coachMarksController.dataSource = self
         coachMarksController.delegate = self
 
         textField.delegate = self
 
-        textField.returnKeyType = UIReturnKeyType.done;
+        textField.returnKeyType = UIReturnKeyType.done
 
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillShow),
-                                               name: .UIKeyboardWillShow, object: nil)
+                                               name: UIResponder.keyboardWillShowNotification, object: nil)
 
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardWillHide),
-                                               name: .UIKeyboardWillHide, object: nil)
+                                               name: UIResponder.keyboardWillHideNotification, object: nil)
 
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidShow),
-                                               name: .UIKeyboardDidShow, object: nil)
+                                               name: UIResponder.keyboardDidShowNotification, object: nil)
 
         NotificationCenter.default.addObserver(self, selector: #selector(keyboardDidHide),
-                                               name: .UIKeyboardDidHide, object: nil)
+                                               name: UIResponder.keyboardDidHideNotification, object: nil)
     }
 
     override func viewDidAppear(_ animated: Bool) {
@@ -74,7 +55,7 @@ internal class KeyboardViewController: UIViewController {
     }
 
     func startInstructions() {
-        self.coachMarksController.start(on: self)
+        self.coachMarksController.start(in: .window(over: self))
     }
 
     @objc func keyboardWillShow() {
@@ -101,7 +82,7 @@ extension KeyboardViewController: CoachMarksControllerDataSource {
     }
 
     func coachMarksController(_ coachMarksController: CoachMarksController, coachMarkAt index: Int) -> CoachMark {
-        switch(index) {
+        switch index {
         case 0:
             return coachMarksController.helper.makeCoachMark(for: self.avatar)
         case 1:
@@ -111,11 +92,15 @@ extension KeyboardViewController: CoachMarksControllerDataSource {
         }
     }
 
-    func coachMarksController(_ coachMarksController: CoachMarksController, coachMarkViewsAt index: Int, madeFrom coachMark: CoachMark) -> (bodyView: CoachMarkBodyView, arrowView: CoachMarkArrowView?) {
+    func coachMarksController(
+        _ coachMarksController: CoachMarksController,
+        coachMarkViewsAt index: Int,
+        madeFrom coachMark: CoachMark
+    ) -> (bodyView: (UIView & CoachMarkBodyView), arrowView: (UIView & CoachMarkArrowView)?) {
 
         var coachViews: (bodyView: CoachMarkBodyDefaultView, arrowView: CoachMarkArrowDefaultView?)
 
-        switch(index) {
+        switch index {
         case 1:
             coachViews = coachMarksController.helper
                                              .makeDefaultCoachViews(withArrow: true,
@@ -144,11 +129,11 @@ extension KeyboardViewController: CoachMarksControllerDelegate {
     
     func coachMarksController(_ coachMarksController: CoachMarksController,
                               willShow coachMark: inout CoachMark,
-                              afterSizeTransition: Bool,
+                              beforeChanging change: ConfigurationChange,
                               at index: Int) {
         if index == 1 {
             coachMark.arrowOrientation = .bottom
-            if !afterSizeTransition {
+            if change == .nothing {
                 textField.becomeFirstResponder()
                 coachMarksController.flow.pause()
             }

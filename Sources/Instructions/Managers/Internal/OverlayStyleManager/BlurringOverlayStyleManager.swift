@@ -1,24 +1,5 @@
-// OverlayManager.swift
-//
-// Copyright (c) 2017 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2017-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 
@@ -79,7 +60,7 @@ class BlurringOverlayStyleManager: OverlayStyleManager {
         path.usesEvenOddFillRule = true
 
         view.shapeLayer.path = path.cgPath
-        view.shapeLayer.fillRule = kCAFillRuleEvenOdd
+        view.shapeLayer.fillRule = CAShapeLayerFillRule.evenOdd
 
         return view
     }
@@ -88,12 +69,12 @@ class BlurringOverlayStyleManager: OverlayStyleManager {
         return UIBlurEffect(style: style)
     }
 
-    private let style: UIBlurEffectStyle
+    private let style: UIBlurEffect.Style
 
     private var isOverlayHidden: Bool = true
 
     // MARK: Initialization
-    init(style: UIBlurEffectStyle) {
+    init(style: UIBlurEffect.Style) {
         self.style = style
     }
 
@@ -184,6 +165,10 @@ class BlurringOverlayStyleManager: OverlayStyleManager {
         })
     }
 
+    func updateStyle(with traitCollection: UITraitCollection) {
+        overlayView?.setNeedsDisplay()
+    }
+
     // MARK: Private methods
     private func setUpOverlay() {
         guard let cutoutOverlays = self.makeSnapshotOverlays() else { return }
@@ -213,9 +198,9 @@ class BlurringOverlayStyleManager: OverlayStyleManager {
     }
 
     private func makeSnapshotOverlays() -> (background: OverlaySnapshotView,
-        foreground: OverlaySnapshotView)? {
+                                            foreground: OverlaySnapshotView)? {
             guard let background = makeSnapshotView(),
-                let foreground = makeSnapshotView() else {
+                  let foreground = makeSnapshotView() else {
                     return nil
             }
 

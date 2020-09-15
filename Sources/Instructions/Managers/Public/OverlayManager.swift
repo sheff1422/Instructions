@@ -1,24 +1,5 @@
-// OverlayManager.swift
-//
-// Copyright (c) 2017 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2017-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 
@@ -27,7 +8,7 @@ import UIKit
 public class OverlayManager {
     // MARK: - Public properties
     /// The background color of the overlay
-    public var color: UIColor = Constants.overlayColor {
+    public var backgroundColor: UIColor = InstructionsColor.overlay {
         didSet {
             overlayStyleManager = updateOverlayStyleManager()
         }
@@ -40,16 +21,21 @@ public class OverlayManager {
     /// Setting this property to anything but `nil` will
     /// enable the effect. `overlayColor` will be ignored if this
     /// property is set.
-    public var blurEffectStyle: UIBlurEffectStyle? {
+    public var blurEffectStyle: UIBlurEffect.Style? {
         didSet {
             overlayStyleManager = updateOverlayStyleManager()
         }
     }
 
+    public var cutoutPath: UIBezierPath? {
+        get { return overlayView.cutoutPath }
+        set { overlayView.cutoutPath = newValue }
+    }
+
     /// `true` to let the overlay catch tap event and forward them to the
     /// CoachMarkController, `false` otherwise.
     /// After receiving a tap event, the controller will show the next coach mark.
-    public var allowTap: Bool {
+    public var isUserInteractionEnabled: Bool {
         get {
             return self.singleTapGestureRecognizer.view != nil
         }
@@ -63,29 +49,16 @@ public class OverlayManager {
         }
     }
 
-    public var cutoutPath: UIBezierPath? {
-        get {
-            return overlayView.cutoutPath
-        }
-
-        set {
-            overlayView.cutoutPath = newValue
-        }
-    }
-
     /// Used to temporarily enable touch forwarding isnide the cutoutPath.
-    public var allowTouchInsideCutoutPath: Bool {
-        get {
-            return overlayView.allowTouchInsideCutoutPath
-        }
-
-        set {
-            overlayView.allowTouchInsideCutoutPath = newValue
-        }
+    public var isUserInteractionEnabledInsideCutoutPath: Bool {
+        get { return overlayView.allowTouchInsideCutoutPath }
+        set { overlayView.allowTouchInsideCutoutPath = newValue }
     }
 
-    /// Define the window level for the overlay.
-    public var windowLevel = UIWindowLevelNormal + 1
+    public var areTouchEventsForwarded: Bool {
+        get { return overlayView.forwardTouchEvents }
+        set { overlayView.forwardTouchEvents = newValue }
+    }
 
     // MARK: - Internal Properties
     /// Delegate to which tell that the overlay view received a tap event.
@@ -110,18 +83,14 @@ public class OverlayManager {
         } else {
             var alpha: CGFloat = 1.0
             var white: CGFloat = 1.0
-            color.getWhite(&white, alpha: &alpha)
+            backgroundColor.getWhite(&white, alpha: &alpha)
 
             return white >= 0.5 ? .default : .lightContent
         }
     }
 
     internal var isWindowHidden: Bool {
-#if INSTRUCTIONS_APP_EXTENSIONS
         return overlayView.superview?.isHidden ?? true
-#else
-        return overlayView.window?.isHidden ?? true
-#endif
     }
 
     internal var isOverlayInvisible: Bool {
@@ -145,7 +114,7 @@ public class OverlayManager {
     /// a tap event.
     ///
     /// - Parameter sender: the object which sent the event
-    @objc fileprivate func handleSingleTap(_ sender: AnyObject?) {
+    @objc private func handleSingleTap(_ sender: AnyObject?) {
         if enableTap {
             self.overlayDelegate?.didReceivedSingleTap()
         }
@@ -165,49 +134,26 @@ public class OverlayManager {
     }
 
     func showWindow(_ show: Bool, completion: ((Bool) -> Void)?) {
-#if INSTRUCTIONS_APP_EXTENSIONS
-        guard let topView = overlayView.superview else {
+        guard let rootView = overlayView.superview else {
             completion?(false)
             return
         }
 
         if show {
             overlayView.alpha = 1.0
-            topView.isHidden = false
+            rootView.isHidden = false
             UIView.animate(withDuration: fadeAnimationDuration, animations: {
-                topView.alpha = 1.0
-            }, completion: completion)
-        } else {
-            topView.isHidden = false
-            UIView.animate(withDuration: fadeAnimationDuration, animations: {
-                topView.alpha = 0.0
-            }, completion: { (success) in
-                topView.isHidden = true
-                completion?(success)
-            })
-        }
-#else
-        guard let window = overlayView.window else {
-            completion?(false)
-            return
-        }
-
-        if show {
-            overlayView.alpha = 1.0
-            window.isHidden = false
-            UIView.animate(withDuration: fadeAnimationDuration, animations: {
-                window.alpha = 1.0
+                rootView.alpha = 1.0
             }, completion: completion)
         } else {
             overlayView.window?.isHidden = false
             UIView.animate(withDuration: fadeAnimationDuration, animations: {
-                window.alpha = 0.0
+                rootView.alpha = 0.0
             }, completion: { (success) in
-                window.isHidden = true
+                rootView.isHidden = true
                 completion?(success)
             })
         }
-#endif
     }
 
     func viewWillTransition() {
@@ -220,6 +166,10 @@ public class OverlayManager {
         overlayStyleManager.viewDidTransition()
     }
 
+    func updateStyle(with traitCollection: UITraitCollection) {
+        overlayStyleManager.updateStyle(with: traitCollection)
+    }
+
     private func updateDependencies(of overlayAnimator: BlurringOverlayStyleManager) {
         overlayAnimator.overlayView = self.overlayView
         overlayAnimator.snapshotDelegate = self.overlayDelegate
@@ -230,16 +180,29 @@ public class OverlayManager {
     }
 
     private func updateOverlayStyleManager() -> OverlayStyleManager {
-        if let style = blurEffectStyle, !UIAccessibilityIsReduceTransparencyEnabled() {
+        if let style = blurEffectStyle, !UIAccessibility.isReduceTransparencyEnabled {
             let blurringOverlayStyleManager = BlurringOverlayStyleManager(style: style)
             self.updateDependencies(of: blurringOverlayStyleManager)
             return blurringOverlayStyleManager
         } else {
-            let translucentOverlayStyleManager = TranslucentOverlayStyleManager(color: color)
+            let translucentOverlayStyleManager = TranslucentOverlayStyleManager(color: backgroundColor)
             self.updateDependencies(of: translucentOverlayStyleManager)
             return translucentOverlayStyleManager
         }
     }
+
+    // MARK: Renamed Public Properties
+    @available(*, unavailable, renamed: "backgroundColor")
+    public var color: UIColor = InstructionsColor.overlay
+
+    @available(*, unavailable, renamed: "isUserInteractionEnabled")
+    public var allowTap: Bool = true
+
+    @available(*, unavailable, renamed: "isUserInteractionEnabledInsideCutoutPath")
+    public var allowTouchInsideCutoutPath: Bool = false
+
+    @available(*, unavailable, renamed: "areTouchEventsForwarded")
+    public var forwardTouchEvents: Bool = false
 }
 
 // swiftlint:disable class_delegate_protocol

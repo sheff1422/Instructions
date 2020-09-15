@@ -1,24 +1,5 @@
-// CoachMarkView.swift
-//
-// Copyright (c) 2015, 2016 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2015-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 
@@ -63,31 +44,18 @@ class CoachMarkView: UIView {
     ///                               to overlap the body) - a positive number
     ///                               will make the arrow overlap.
     /// - Parameter coachMarkInnerLayoutHelper: auto-layout constraints helper.
-    init(bodyView: CoachMarkBodyView, arrowView: CoachMarkArrowView? = nil,
-         arrowOrientation: CoachMarkArrowOrientation? = nil, arrowOffset: CGFloat? = 0.0,
+    init(bodyView: UIView & CoachMarkBodyView,
+         arrowView: (UIView & CoachMarkArrowView)? = nil,
+         arrowOrientation: CoachMarkArrowOrientation? = nil, arrowOffset: CGFloat? = nil,
          coachMarkInnerLayoutHelper: CoachMarkInnerLayoutHelper) {
-
-        // Due to the fact Swift 2 compiler doesn't let us enforce type check of
-        // an object being a class conforming to a given protocol, we are checking
-        // the type of body and arrow views at runtime. This isn't very nice, but
-        // I haven't found any better way to enforce that they both are subclasses
-        // of `UIView` and conform to the `CoachMarkBodyView` and
-        // `CoachMarkArrowView` protocols.
-        if !(bodyView is UIView) {
-            fatalError("Body view must conform to CoachMarkBodyView but also be a UIView.")
-        }
-
-        if arrowView != nil && !(arrowView is UIView) {
-            fatalError("Arrow view must conform to CoachMarkArrowView but also be a UIView.")
-        }
 
         self.bodyView = bodyView
         self.arrowView = arrowView
         self.arrowOrientation = arrowOrientation
         self.coachMarkLayoutHelper = coachMarkInnerLayoutHelper
 
-        if arrowOffset != nil {
-            self.arrowOffset = arrowOffset!
+        if let arrowOffset = arrowOffset {
+            self.arrowOffset = arrowOffset
         }
 
         super.init(frame: CGRect.zero)
@@ -97,7 +65,7 @@ class CoachMarkView: UIView {
     }
 
     required init?(coder aDecoder: NSCoder) {
-        fatalError("This class does not support NSCoding.")
+        fatalError(ErrorMessage.Fatal.doesNotSupportNSCoding)
     }
 
     // MARK: - Internal Method
@@ -123,13 +91,13 @@ class CoachMarkView: UIView {
             for: (bodyView: bodyUIView, arrowView: arrowUIView), withPosition: position,
             horizontalOffset: offset)
 
-        self.addConstraint(innerConstraints.arrowXposition!)
+        innerConstraints.arrowXposition?.isActive = true
     }
 
     // MARK: - Private Method
 
     /// Layout the body view and the arrow view together.
-    fileprivate func layoutViewComposition() {
+    private func layoutViewComposition() {
         translatesAutoresizingMaskIntoConstraints = false
 
         self.addSubview(bodyUIView)
@@ -142,14 +110,14 @@ class CoachMarkView: UIView {
                 for: (bodyView: bodyUIView, arrowView: arrowUIView), withPosition: .center,
                 horizontalOffset: 0)
 
-            self.addConstraint(innerConstraints.arrowXposition!)
+            innerConstraints.arrowXposition?.isActive = true
             self.addConstraints(coachMarkLayoutHelper.verticalConstraints(
                 for: (bodyView: bodyUIView, arrowView: arrowUIView), in: self,
                 withProperties: (orientation: arrowOrientation, verticalArrowOffset: arrowOffset)
             ))
         } else {
-            self.addConstraint(bodyUIView.topAnchor.constraint(equalTo: topAnchor))
-            self.addConstraint(bodyUIView.bottomAnchor.constraint(equalTo: bottomAnchor))
+            bodyUIView.topAnchor.constraint(equalTo: topAnchor).isActive = true
+            bodyUIView.bottomAnchor.constraint(equalTo: bottomAnchor).isActive = true
         }
     }
 }
@@ -161,13 +129,13 @@ extension CoachMarkView: CoachMarkBodyHighlightArrowDelegate {
     }
 }
 
-struct CoachMarkViewConstraints {
+private struct CoachMarkViewConstraints {
     /// The horizontal position of the arrow, likely to be at the center of the
     /// cutout path.
-    fileprivate var arrowXposition: NSLayoutConstraint?
+    var arrowXposition: NSLayoutConstraint?
 
     /// The constraint making the body stick to its parent.
-    fileprivate var bodyStickToParent: NSLayoutConstraint?
+    var bodyStickToParent: NSLayoutConstraint?
 
     init () { }
 }

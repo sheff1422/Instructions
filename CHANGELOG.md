@@ -2,8 +2,98 @@
 Important changes to Instructions will be documented in this file.
 Instructions follows [Semantic Versioning](http://semver.org/).
 
+## [2.0.0](https://github.com/ephread/Instructions/releases/tag/2.0.0)
+Released on 2020-05-14.
+
+### Fixed
+- Fix [#205] - Safe area insets ignored by coach mark layout system
+- Fix [#231] - Support iOS 13's `WindowScene`
+- Fix incorrect window bounds while multitasking on iPad
+
+[#205]: https://github.com/ephread/Instructions/issues/205
+[#231]: https://github.com/ephread/Instructions/issues/231
+
+### Changed
+- Move from Travis to Github Actions
+- Refactor example project
+- Change return type in `coachMarkViewsAt` to enforce the type through protocol
+  composition
+- Unify the naming conventions for exposed properties
+
+### Added
+- Full dark mode support
+- Customizable default Coachmark
+- Support of Swift Package Manager
+- Let overlay forward touch events with a new option [#212]
+
+[#212]: https://github.com/ephread/Instructions/issues/212
+
+### Removed
+- Asset Bundles
+
+## [1.4.0](https://github.com/ephread/Instructions/releases/tag/1.4.0)
+Released on 2019-05-04.
+
+### Fixed
+- Fix [#218] - Division by zero during layout phase
+
+### Changed
+- Turn runtime checks into cimpile time checks (protocol composition)
+- Improve error message when `numberOfCoachMarks <= 0`
+
+### Removed
+- Remove deprecated methods
+- Remove LFS in snapshot submodule
+
+[#218]: https://github.com/ephread/Instructions/issues/218
+
+## [1.3.1](https://github.com/ephread/Instructions/releases/tag/1.3.1)
+Released on 2019-10-05.
+
+### Fixed
+- Fix [#204] - `spec.swift_version` set to 5 instead of 5.0
+
+[#204]: https://github.com/ephread/Instructions/issues/204
+
+## [1.3.0](https://github.com/ephread/Instructions/releases/tag/1.3.0)
+Released on 2019-04-11.
+
+### Fixed
+- Fix [#187] - Wrong index reported by `didHide`
+
+### Added
+- Add previous coach mark functionality ([#182])
+
+### Changed
+- Migrated to Swift 5
+
+[#182]: https://github.com/ephread/Instructions/issues/182
+[#187]: https://github.com/ephread/Instructions/issues/187
+
+## [1.2.2](https://github.com/ephread/Instructions/releases/tag/1.2.2)
+Released on 2018-12-06.
+
+## [1.2.1](https://github.com/ephread/Instructions/releases/tag/1.2.1)
+Released on 2018-12-05. ⚠️ Defective version
+
+### Fixed
+- Fix [#160] - CoachMark misplaced on iPad
+
+### Added
+- Add support for coach marks placed over cutout paths. ([#152])
+- Add support for presentation contexts. ([#84])
+- Add support for animated coach marks.
+
+### Changed
+- Change willSHow and didShow coachmark delegate methods to discrimate between
+  different configuration changes.
+
+[#84]: https://github.com/ephread/Instructions/issues/84
+[#152]: https://github.com/ephread/Instructions/issues/152
+[#160]: https://github.com/ephread/Instructions/issues/160
+
 ## [1.2.0](https://github.com/ephread/Instructions/releases/tag/1.2.0)
-Released on 2018-06-XX.
+Released on 2018-06-04.
 
 ### Changed
 - Migrated to Swift 4.1 (PR [#159])

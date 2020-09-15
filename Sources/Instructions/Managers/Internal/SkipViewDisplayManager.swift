@@ -1,24 +1,5 @@
-// SkipViewDisplayManager.swift
-//
-// Copyright (c) 2015, 2016 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2015-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 
@@ -27,6 +8,8 @@ class SkipViewDisplayManager {
     // MARK: - Internal properties
     /// Datasource providing the constraints to use.
     weak var dataSource: CoachMarksControllerProxyDataSource?
+
+    var presentationFashion: PresentationFashion = .window
 
     // MARK: - Private properties
     /// Constraints defining the position of the "Skip" view
@@ -37,7 +20,7 @@ class SkipViewDisplayManager {
     ///
     /// - Parameter skipView: the skip view to hide.
     /// - Parameter duration: the duration of the fade.
-    func hide(skipView: CoachMarkSkipView, duration: TimeInterval = 0) {
+    func hide(skipView: (UIView & CoachMarkSkipView), duration: TimeInterval = 0) {
         if duration == 0 {
             skipView.asView?.alpha = 0.0
         } else {
@@ -51,9 +34,9 @@ class SkipViewDisplayManager {
     ///
     /// - Parameter skipView: the skip view to show.
     /// - Parameter duration: the duration of the fade.
-    func show(skipView: CoachMarkSkipView, duration: TimeInterval = 0) {
+    func show(skipView: (UIView & CoachMarkSkipView), duration: TimeInterval = 0) {
         guard let parentView = skipView.asView?.superview else {
-            print("The Skip View has no parent, aborting.")
+            print(ErrorMessage.Info.skipViewNoSuperviewNotShown)
             return
         }
 
@@ -62,7 +45,7 @@ class SkipViewDisplayManager {
 
         update(skipView: skipView, withConstraints: constraints)
 
-        skipView.asView?.superview?.bringSubview(toFront: skipView.asView!)
+        skipView.asView?.superview?.bringSubviewToFront(skipView.asView!)
 
         if duration == 0 {
             skipView.asView?.alpha = 1.0
@@ -77,10 +60,10 @@ class SkipViewDisplayManager {
     ///
     /// - Parameter skipView: the skip view to position.
     /// - Parameter constraints: the constraints to use.
-    func update(skipView: CoachMarkSkipView,
+    func update(skipView: (UIView & CoachMarkSkipView),
                 withConstraints constraints: [NSLayoutConstraint]?) {
         guard let parentView = skipView.asView?.superview else {
-            print("The Skip View has no parent, aborting.")
+            print(ErrorMessage.Info.skipViewNoSuperviewNotUpdated)
             return
         }
 
@@ -98,13 +81,8 @@ class SkipViewDisplayManager {
         parentView.addConstraints(self.skipViewConstraints)
     }
 
-    private func defaultConstraints(for skipView: CoachMarkSkipView, in parentView: UIView)
+    private func defaultConstraints(for skipView: (UIView & CoachMarkSkipView), in parentView: UIView)
     -> [NSLayoutConstraint] {
-        guard let skipView = skipView as? UIView else {
-            print("Skip View is not an UIVIew, aborting.")
-            return []
-        }
-
         var constraints = [NSLayoutConstraint]()
 
         let trailingAnchor: NSLayoutXAxisAnchor
@@ -118,16 +96,34 @@ class SkipViewDisplayManager {
                                                               constant: -10))
 
         var topConstant: CGFloat = 0.0
-
         let topAnchor: NSLayoutYAxisAnchor
-        if #available(iOS 11.0, *) {
-            topAnchor = parentView.safeAreaLayoutGuide.topAnchor
-        } else {
-            topAnchor = parentView.topAnchor
 
-            #if !INSTRUCTIONS_APP_EXTENSIONS
+        switch presentationFashion {
+        case .window:
+            if #available(iOS 11.0, *) {
+                topAnchor = parentView.safeAreaLayoutGuide.topAnchor
+            } else {
+                topAnchor = parentView.topAnchor
                 topConstant = updateTopConstant(from: topConstant)
-            #endif
+            }
+        case .viewControllerWindow:
+            if #available(iOS 11.0, *), let window = parentView.window,
+               let safeAreaInsets = window.rootViewController?.view.safeAreaInsets {
+                // For some reasons I don't fully understand, window.safeAreaInsets.top is correctly
+                // set for the iPhone X, but not for other iPhones. That's why we have this
+                // awkward "hack", whereby the top inset is added manually.
+                topAnchor = parentView.topAnchor
+                topConstant = safeAreaInsets.top
+            } else {
+                topAnchor = parentView.topAnchor
+                topConstant = updateTopConstant(from: topConstant)
+            }
+        case .viewController:
+            if #available(iOS 11.0, *) {
+                topAnchor = parentView.safeAreaLayoutGuide.topAnchor
+            } else {
+                topAnchor = parentView.topAnchor
+            }
         }
 
         topConstant += 2
@@ -136,5 +132,15 @@ class SkipViewDisplayManager {
                                                          constant: topConstant))
 
         return constraints
+    }
+
+    func updateTopConstant(from original: CGFloat) -> CGFloat {
+#if !INSTRUCTIONS_APP_EXTENSIONS
+        if !UIApplication.shared.isStatusBarHidden {
+            return UIApplication.shared.statusBarFrame.size.height
+        }
+#endif
+
+        return original
     }
 }

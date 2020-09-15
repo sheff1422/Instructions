@@ -1,24 +1,5 @@
-// KeyboardViewController.swift
-//
-// Copyright (c) 2016 Frédéric Maquin <fred@ephread.com>
-//
-// Permission is hereby granted, free of charge, to any person obtaining a copy
-// of this software and associated documentation files (the "Software"), to deal
-// in the Software without restriction, including without limitation the rights
-// to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-// copies of the Software, and to permit persons to whom the Software is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in
-// all copies or substantial portions of the Software.
-//
-// THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-// IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-// FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-// AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-// LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
-// THE SOFTWARE.
+// Copyright (c) 2016-present Frédéric Maquin <fred@ephread.com> and contributors.
+// Licensed under the terms of the MIT License.
 
 import UIKit
 import InstructionsAppExtensions // <-- If you're using Carthage or managing frameworks manually.
@@ -43,7 +24,11 @@ class KeyboardViewController: UIInputViewController,
 
         loadInterface()
 
-        self.nextKeyboardButton.addTarget(self, action: #selector(UIInputViewController.advanceToNextInputMode), for: .touchUpInside)
+        self.nextKeyboardButton.addTarget(
+            self,
+            action: #selector(UIInputViewController.advanceToNextInputMode),
+            for: .touchUpInside
+        )
 
         self.coachMarksController = CoachMarksController()
         self.coachMarksController?.dataSource = self
@@ -59,8 +44,7 @@ class KeyboardViewController: UIInputViewController,
         skipView.setTitle("Skip", for: .normal)
 
         self.coachMarksController?.skipView = skipView
-
-        self.coachMarksController?.start(on: self)
+        self.coachMarksController?.start(in: .currentWindow(of: self))
     }
 
     override func didReceiveMemoryWarning() {
@@ -77,11 +61,12 @@ class KeyboardViewController: UIInputViewController,
     }
 
     func numberOfCoachMarks(for coachMarksController: CoachMarksController) -> Int {
-        return 4;
+        return 4
     }
 
-    func coachMarksController(_ coachMarksController: CoachMarksController, coachMarkAt index: Int) -> CoachMark {
-        switch(index) {
+    func coachMarksController(_ coachMarksController: CoachMarksController,
+                              coachMarkAt index: Int) -> CoachMark {
+        switch index {
         case 0:
             return coachMarksController.helper.makeCoachMark(for: self.nextKeyboardButton)
         case 1:
@@ -95,12 +80,17 @@ class KeyboardViewController: UIInputViewController,
         }
     }
 
+    func coachMarksController(
+        _ coachMarksController: CoachMarksController,
+        coachMarkViewsAt index: Int,
+        madeFrom coachMark: CoachMark
+    ) -> (bodyView: UIView & CoachMarkBodyView, arrowView: (UIView & CoachMarkArrowView)?) {
+        let coachViews = coachMarksController.helper.makeDefaultCoachViews(
+            withArrow: true,
+            arrowOrientation: coachMark.arrowOrientation
+        )
 
-    func coachMarksController(_ coachMarksController: CoachMarksController, coachMarkViewsAt index: Int, madeFrom coachMark: CoachMark) -> (bodyView: CoachMarkBodyView, arrowView: CoachMarkArrowView?) {
-
-        let coachViews = coachMarksController.helper.makeDefaultCoachViews(withArrow: true, arrowOrientation: coachMark.arrowOrientation)
-
-        switch(index) {
+        switch index {
         case 0:
             coachViews.bodyView.hintLabel.text = "Tap here to change the keyboard."
             coachViews.bodyView.nextLabel.text = "Next"
@@ -115,12 +105,14 @@ class KeyboardViewController: UIInputViewController,
             coachViews.bodyView.nextLabel.text = "Finish"
         default: break
         }
-        
+
         return (bodyView: coachViews.bodyView, arrowView: coachViews.arrowView)
     }
 
-    func coachMarksController(_ coachMarksController: CoachMarksController, willShow coachMark: inout CoachMark, afterSizeTransition: Bool, at index: Int) {
-        if index == 2 && !afterSizeTransition {
+    func coachMarksController(_ coachMarksController: CoachMarksController,
+                              willShow coachMark: inout CoachMark,
+                              beforeChanging change: ConfigurationChange, at index: Int) {
+        if index == 2 && change == .nothing {
             coachMarksController.flow.pause(and: .hideInstructions)
         }
     }
@@ -129,9 +121,9 @@ class KeyboardViewController: UIInputViewController,
         // load the nib file
         let nib = UINib(nibName: "Keyboard", bundle: nil)
         // instantiate the view
-        keyboardView = nib.instantiate(withOwner: self, options: nil)[0] as! UIView
+        keyboardView = nib.instantiate(withOwner: self, options: nil)[0] as? UIView ?? UIView()
         keyboardView.translatesAutoresizingMaskIntoConstraints = false
-        
+
         // add the interface to the main view
         view.addSubview(keyboardView)
         keyboardView.fillSuperview()
