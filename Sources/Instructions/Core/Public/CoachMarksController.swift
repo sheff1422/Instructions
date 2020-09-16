@@ -103,6 +103,11 @@ public extension CoachMarksController {
 
 // MARK: - Flow management
 public extension CoachMarksController {
+    
+    func start(from viewController: UIViewController) {
+        start(in: PresentationContext.currentWindow(of: viewController))
+    }
+    
     /// Start instructions in the given context.
     ///
     /// - Parameter presentationContext: the context in which show Instructions
